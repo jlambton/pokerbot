@@ -51,10 +51,6 @@ class Player(object):
     def show_stack(self):
         print("{} has stack: {}bb".format(self.name, self.stack))
 
-    def check(self):
-        self.player_bet = 0
-        return self.player_bet
-
     def bet(self):
 
         while not 1 <= self.player_bet <= self.stack:
@@ -70,10 +66,11 @@ class Player(object):
     def call_bet(self, current_bet):
 
         to_call = current_bet - self.player_bet
+        # print(">>>>> to call =", to_call)
 
         if  self.stack < to_call:
             self.player_bet = self.player_bet + self.stack
-            self.stack = 0
+            self.stack = 0.0
         else:
             self.player_bet = current_bet
             self.stack = self.stack - to_call
@@ -112,7 +109,7 @@ class Player(object):
             print('c to check, b to bet:')
             choice = input()
         if choice == 'c':
-            return self.check()
+            return 0.0
         if choice == 'b':
             return self.bet()
 
@@ -123,10 +120,9 @@ class Player(object):
             choice = input()
         if choice == 'f':
             self.status = 'out'
-            return current_bet
+            return 0.0
         elif choice == 'c':
-            self.call_bet(current_bet)
-            return current_bet
+            return self.call_bet(current_bet)
         elif choice =='r':
             return self.raise_bet(current_bet)
 
@@ -163,6 +159,10 @@ class Dealer(object):
             bet_received = player.option_def(hand.max_bet)
 
         hand.pot = hand.pot + bet_received
+
+        if player.stack == 0:
+            player.status = 'all in'
+
         return bet_received
 
     def distribute_pot(self, winner):
@@ -175,51 +175,18 @@ class Hand(object):
     def __init__(self, player_info):
         self.num_active_players = len(player_info)
         self.active_players = []
+        self.all_in_players = []
         self.inactive_players = []
-        self.player_bets = [0] * self.num_active_players
         self.pot = 0
-        self.max_bet = 0
 
     def show_stacks(self, active_players):
         for player in active_players:
             print("{} has stack {}bb".format(player.name, player.stack))
 
     def player_action(self, dealer):
-
-        q = 0
-        for player in self.active_players:
-
-            if player.player_bet < self.max_bet and player.stack != 0 or player.player_bet == 0:
-
-                print("{}, your option, you have {}bb:".format(player.name, player.stack))
-
-                player.player_bet = player.player_bet + dealer.receive_bet(player, hand)
-                self.player_bets[q] = player.player_bet
-                q += 1
-                self.max_bet = max(self.player_bets)
-
-                print("{} bet {}bb".format(player.name, player.player_bet))
-                print("{} now has stack {}bb".format(player.name, player.stack))
-                print("Pot is {}bb".format(self.pot))
-
-        p = len(self.active_players) - 1
-        for player in reversed(self.active_players):
-
-            if player.status == 'out':
-                self.inactive_players.append(self.active_players.pop(p))
-                del self.player_bets[p]
-            p -= 1
-
-        self.num_active_players = len(self.active_players)
-
-
+        pass
 
     def play_street(self, dealer, street):
-
-        self.current_bet = 0
-        for player in self.active_players:
-            if player.stack !=0:
-                player.player_bet = 0
 
         if street['name'] == 'Preflop':
             for player in self.active_players:
@@ -229,12 +196,13 @@ class Hand(object):
 
         self.show_stacks(self.active_players)
 
-        if street['name'] == 'Showdown':
-            self.show_stacks(self.inactive_players)
-        else:
+        if street['name'] != 'Showdown':
             self.player_action(dealer)
-            while not all(b == self.player_bets[0] for b in self.player_bets):
+            while not all(b == self.active_players[0] for b in self.active_players):
                 self.player_action(dealer)
+        else:
+            self.show_stacks(self.inactive_players)
+
 
     def play(self):
 
@@ -254,9 +222,9 @@ class Hand(object):
 
 
 
-player1 = {'name': 'James', 'stack': 100}
+player1 = {'name': 'James', 'stack': 120}
 player2 = {'name': 'Ben', 'stack': 100}
-player3 = {'name': 'Josh', 'stack': 100}
+player3 = {'name': 'Josh', 'stack': 80}
 
 player_info = [player1, player2, player3]
 
