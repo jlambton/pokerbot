@@ -188,6 +188,9 @@ class Hand(object):
 
     def play_street(self, dealer, street):
 
+        for player in self.active_players:
+            player.player_bet = 0
+
         if street['name'] == 'Preflop':
             for player in self.active_players:
                 player.show_hand()
