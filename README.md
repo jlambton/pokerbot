@@ -1,2 +1,2 @@
 # pokerbot
-python poker engine and bot
+python poker engine and bot (WIP)
